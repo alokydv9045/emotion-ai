@@ -1,0 +1,13 @@
+streamlit
+opencv-python
+tensorflow
+pillow
+numpy
+pandas
+pyttsx3
+plotly
+elevenlabs
+scikit-learn
+gtts
+playsound==1.2.2
+pygame
