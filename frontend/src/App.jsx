@@ -39,8 +39,9 @@ import {
   MicOff
 } from 'lucide-react';
 
-const API_URL = "http://localhost:8000/predict";
-const SPEAK_URL = "http://localhost:8000/speak";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = `${API_BASE_URL}/predict`;
+const SPEAK_URL = `${API_BASE_URL}/speak`;
 const POLLING_RATE = 200; 
 
 const HINDI_PHRASES = {

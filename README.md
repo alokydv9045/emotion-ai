@@ -40,7 +40,8 @@ streamlit run app.py
 ## 📂 Documentation
 
 For a deep dive into the technical architecture, model details, and folder structure, check out:
-👉 **[PROJECT_DETAILS.md](./PROJECT_DETAILS.md)**
+👉 **[ABOUT.md](./about.md)**
+👉 **[DEPLOYMENT.md](./deployment.md)**
 
 ---
 
