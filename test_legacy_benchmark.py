@@ -1,0 +1,58 @@
+import sys
+import os
+import cv2
+import numpy as np
+import tensorflow as tf
+
+# Fix pathing to allow legacy import
+sys.path.append(os.path.join(os.getcwd(), "legacy"))
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+from src.predictor import build_precision_model
+
+# CONFIG
+EMOTIONS = ["Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise", "Neutral"]
+MODEL_PATH = "backend/models/emotion_model.h5"
+TEST_DATA_DIR = "dataset/test"
+
+def run_legacy_benchmark(limit_per_emotion=10):
+    print(f"--- Legacy Engine Accuracy Check (Limit: {limit_per_emotion}/emotion) ---")
+    
+    # Force use of backend models path
+    os.environ['MODEL_PATH'] = MODEL_PATH 
+    
+    model = build_precision_model()
+    model.load_weights(MODEL_PATH, by_name=True)
+    _clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+
+    total = 0
+    correct = 0
+
+    for emotion in EMOTIONS:
+        emotion_dir = os.path.join(TEST_DATA_DIR, emotion.lower())
+        files = [f for f in os.listdir(emotion_dir) if f.endswith('.jpg')][:limit_per_emotion]
+        
+        for f in files:
+            img_path = os.path.join(emotion_dir, f)
+            frame = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+            
+            # Legacy logic
+            norm_face = _clahe.apply(frame)
+            resized = cv2.resize(norm_face, (48, 48)).astype("float32") / 255.0
+            input_data = resized.reshape(1, 48, 48, 1)
+            
+            pred = model.predict(input_data, verbose=0)[0]
+            pred_emotion = EMOTIONS[np.argmax(pred)]
+            
+            if pred_emotion.lower() == emotion.lower():
+                correct += 1
+            total += 1
+            
+        print(f"Category {emotion}: Processed {len(files)}")
+
+    print("\n" + "="*30)
+    print(f"LEGACY TOTAL ACC: {(correct/total)*100:.2f}%")
+    print("="*30)
+
+if __name__ == "__main__":
+    run_legacy_benchmark()

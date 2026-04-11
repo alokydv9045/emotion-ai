@@ -1,0 +1,221 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --accent: #22D3EE;
+  --accent-glow: rgba(34, 211, 238, 0.4);
+  --bg-deep: #020408;
+  --sidebar: #060912;
+  --panel-bg: rgba(15, 23, 42, 0.3);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --text-main: #F8FAFC;
+  --text-dim: #64748B;
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background-color: var(--bg-deep);
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* ── STUDIO ARCHITECTURE ── */
+.studio-root {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+  background: radial-gradient(circle at 50% 50%, rgba(34, 211, 238, 0.02) 0%, transparent 70%);
+}
+
+.studio-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── SCANNER VIEWPORT ── */
+.viewport-wrapper {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.scanner-frame {
+  flex: 1;
+  background: #000;
+  border-radius: 20px;
+  border: 1px solid var(--border-glass);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+}
+
+.scanner-video-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* HUD Effects */
+.hud-layer {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.scanlines {
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background-size: 100% 2px, 3px 100%;
+  position: absolute;
+  width: 100%; height: 100%;
+  opacity: 0.15;
+}
+
+.vignette {
+  background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.6) 100%);
+  position: absolute;
+  width: 100%; height: 100%;
+}
+
+.target-reticle {
+  position: absolute;
+  border-radius: 4px;
+  border: 1px solid var(--accent);
+  box-shadow: 0 0 15px var(--accent-glow);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* ── SIDE PANELS ── */
+.studio-aside {
+  width: 20%;
+  min-width: 280px;
+  max-width: 340px;
+  flex-shrink: 1;
+  background: var(--sidebar);
+  border-left: 1px solid var(--border-glass);
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  gap: 20px;
+  z-index: 50;
+  backdrop-filter: blur(10px);
+}
+
+.glass-card {
+  background: var(--panel-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── TELEMETRY TERMINAL ── */
+.studio-footer {
+  height: 180px;
+  background: #020408;
+  border-top: 1px solid var(--border-glass);
+  padding: 16px 24px;
+  display: flex;
+  gap: 24px;
+}
+
+.terminal-box {
+  flex: 1;
+  background: rgba(0,0,0,0.5);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: #334155;
+  overflow-y: auto;
+}
+
+.terminal-line { margin-bottom: 4px; border-left: 2px solid transparent; padding-left: 8px; }
+.terminal-line.active { color: var(--accent); border-color: var(--accent); }
+
+/* ── UI COMPONENTS ── */
+.action-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-pulse { background: var(--accent); color: #000; box-shadow: 0 0 20px var(--accent-glow); }
+.btn-dim { background: rgba(255,255,255,0.03); color: #FFF; border: 1px solid var(--border-glass); }
+
+.action-btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+
+/* ── PHOTO UPLOAD (REVISED) ── */
+.upload-portal {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(34, 211, 238, 0.01) 10px, rgba(34, 211, 238, 0.01) 20px);
+}
+
+.portal-zone {
+  border: 1px dashed var(--accent-glow);
+  background: rgba(34, 211, 238, 0.02);
+  border-radius: 24px;
+  padding: 40px;
+  width: 320px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.portal-zone:hover { border-color: var(--accent); background: rgba(34, 211, 238, 0.05); }
+
+/* ── DATA VIZ ── */
+.stat-row { margin-bottom: 14px; }
+.stat-info { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 6px; }
+.stat-bar-bg { height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; }
+.stat-bar-fill { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) {
+  .studio-aside { width: 300px; }
+  .studio-footer { display: none; }
+}
+@media (max-width: 800px) {
+  .studio-root { flex-direction: column; }
+  .studio-aside { width: 100%; height: auto; border-left: none; border-top: 1px solid var(--border-glass); }
+}
