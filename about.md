@@ -12,6 +12,7 @@ Welcome to the comprehensive documentation for the **Emotion Detection System** 
 
 ---
 
+
 ## 🎯 1. Vision & System Philosophy
 
 The **emotion detection system** was conceived as a response to the "uncanny valley" of human-computer interaction. While traditional sentiment analysis focuses on text-based NLP, the core of human emotion is expressed through subtle micro-expressions in the face. 
