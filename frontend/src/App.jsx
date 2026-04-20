@@ -198,7 +198,7 @@ function App() {
 
       // 3. Update Session Context (Advanced History)
       setHistory(prev => [...prev.slice(-499), { emotion: emo, confidence: conf, timestamp: Date.now() }]);
-      setLogs(prev => [{ id: Date.now(), time: new Date().toLocaleTimeString(), msg: `SCAN: ${emo.toUpperCase()} (${(conf * 100).toFixed(1)}%)` }, ...prev.slice(0, 499)]);
+      setLogs(prev => [{ id: crypto.randomUUID(), time: new Date().toLocaleTimeString(), msg: `SCAN: ${emo.toUpperCase()} (${(conf * 100).toFixed(1)}%)` }, ...prev.slice(0, 499)]);
       
       setSessionStats(prev => ({
         faces: prev.faces + 1,
@@ -234,13 +234,15 @@ function App() {
     } catch (error) {
        setConsecutiveErrors(prev => prev + 1);
        if (consecutiveErrors > 3) setIsLinkHealthy(false);
-       setLogs(prev => [{ id: Date.now(), time: new Date().toLocaleTimeString(), msg: "LINK ERROR: RETRYING..." }, ...prev.slice(0, 499)]);
+       setLogs(prev => [{ id: crypto.randomUUID(), time: new Date().toLocaleTimeString(), msg: "LINK ERROR: RETRYING..." }, ...prev.slice(0, 499)]);
        throw error; 
     }
   }, [isScanning, mode, staticImg, consecutiveErrors, isVoiceEnabled, isSpeaking]);
 
   const speakLocalFallback = (text) => {
-    console.warn("VOICE_GUARD: Switching to Local Fallback (ElevenLabs Blocked)");
+    if (!voiceError) {
+        console.warn("VOICE_GUARD: Switching to Local Fallback (ElevenLabs Blocked)");
+    }
     
     // Ensure the voice engine is cancelled before starting new one (avoids queuing)
     window.speechSynthesis.cancel();
@@ -269,7 +271,7 @@ function App() {
       
       const phrases = HINDI_PHRASES[emo] || HINDI_PHRASES["Neutral"];
       const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
-      setLogs(prev => [{ id: Date.now(), time: new Date().toLocaleTimeString(), msg: `VOICE: "${randomPhrase}"` }, ...prev.slice(0, 499)]);
+      setLogs(prev => [{ id: crypto.randomUUID(), time: new Date().toLocaleTimeString(), msg: `VOICE: "${randomPhrase}"` }, ...prev.slice(0, 499)]);
 
       // 1. Play Akshita Greeting if it's the very first trigger
       if (lastSpokenRef.current.time === 0) {
@@ -343,7 +345,7 @@ function App() {
         setStaticImg(re.target.result); 
         setMode('photo');
         setIsScanning(true); 
-        setLogs(prev => [{ id: Date.now(), time: new Date().toLocaleTimeString(), msg: `LOADED: ${file.name.toUpperCase()}` }, ...prev.slice(0, 499)]);
+        setLogs(prev => [{ id: crypto.randomUUID(), time: new Date().toLocaleTimeString(), msg: `LOADED: ${file.name.toUpperCase()}` }, ...prev.slice(0, 499)]);
       };
       reader.readAsDataURL(file);
     }
