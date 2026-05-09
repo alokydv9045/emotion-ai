@@ -36,7 +36,8 @@ import {
   Volume2,
   VolumeX,
   Mic,
-  MicOff
+  MicOff,
+  Upload
 } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -55,18 +56,20 @@ const HINDI_PHRASES = {
 };
 
 
-// ── CUSTOM THEME: CYBER CYAN ──
+// ── CUSTOM THEME: LIGHT INTERACTIVE ──
 const theme = createTheme({
   palette: {
-    mode: 'dark',
-    primary: { main: '#22d3ee' },
-    secondary: { main: '#0f172a' },
-    background: { default: '#02040a', paper: '#090e1a' },
-    text: { primary: '#f8fafc', secondary: '#64748b' },
+    mode: 'light',
+    primary: { main: '#0ea5e9' },
+    secondary: { main: '#cbd5e1' },
+    background: { default: '#f4f4f5', paper: '#fafafa' },
+    text: { primary: '#0f172a', secondary: '#475569' },
   },
   typography: {
-    fontFamily: '"Inter", "Outfit", sans-serif',
+    fontFamily: '"Outfit", "Inter", sans-serif',
     h6: { fontWeight: 700, letterSpacing: '0.5px' },
+    h4: { fontWeight: 600, letterSpacing: '-0.5px' },
+    body2: { fontWeight: 500, letterSpacing: '0.2px' }
   },
   shape: { borderRadius: 12 },
   components: {
@@ -74,20 +77,21 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundImage: 'none',
-          border: '1px solid rgba(34, 211, 238, 0.05)',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
         }
       }
     }
   }
 });
 
-// ── SUB-COMPONENT: NEURAL BAR (CYBER VERSION) ──
+// ── SUB-COMPONENT: NEURAL BAR (LIGHT VERSION) ──
 const NeuralBar = ({ label, value, isActive }) => (
   <Box sx={{ 
     mb: 1.5, 
     p: isActive ? 0.8 : 0, 
     borderRadius: 1,
-    bgcolor: isActive ? 'rgba(34, 211, 238, 0.05)' : 'transparent',
+    bgcolor: isActive ? 'rgba(14, 165, 233, 0.05)' : 'transparent',
     transition: 'all 0.3s ease'
   }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5, px: 0.5 }}>
@@ -98,7 +102,6 @@ const NeuralBar = ({ label, value, isActive }) => (
           fontWeight: isActive ? 800 : 600, 
           fontSize: '0.68rem',
           letterSpacing: isActive ? '1px' : 'normal',
-          textShadow: isActive ? '0 0 8px rgba(34, 211, 238, 0.5)' : 'none',
           transition: 'all 0.3s ease'
         }}
       >
@@ -107,7 +110,7 @@ const NeuralBar = ({ label, value, isActive }) => (
       <Typography 
         variant="caption" 
         sx={{ 
-          color: isActive ? '#fff' : 'text.secondary', 
+          color: isActive ? 'primary.main' : 'text.secondary', 
           fontSize: '0.68rem',
           fontWeight: isActive ? 700 : 400,
           transition: 'all 0.3s ease'
@@ -116,9 +119,9 @@ const NeuralBar = ({ label, value, isActive }) => (
         {value.toFixed(1)}%
       </Typography>
     </Box>
-    <Box className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-900">
+    <Box className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden border border-slate-300">
       <motion.div 
-        className={`h-full ${isActive ? 'bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.8)]' : 'bg-slate-800'}`}
+        className={`h-full ${isActive ? 'bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.4)]' : 'bg-slate-400'}`}
         initial={{ width: 0 }}
         animate={{ width: `${value}%` }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -134,7 +137,7 @@ const WaveformVisualizer = ({ isSpeaking }) => (
         key={i}
         animate={isSpeaking ? { height: [4, 16, 8, 20, 4] } : { height: 4 }}
         transition={{ repeat: Infinity, duration: 0.5, delay: i * 0.1 }}
-        style={{ width: 3, backgroundColor: '#22d3ee', borderRadius: 2 }}
+        style={{ width: 3, backgroundColor: '#0ea5e9', borderRadius: 2 }}
       />
     ))}
   </Box>
@@ -234,7 +237,8 @@ function App() {
     } catch (error) {
        setConsecutiveErrors(prev => prev + 1);
        if (consecutiveErrors > 3) setIsLinkHealthy(false);
-       setLogs(prev => [{ id: crypto.randomUUID(), time: new Date().toLocaleTimeString(), msg: "LINK ERROR: RETRYING..." }, ...prev.slice(0, 499)]);
+       setLogs(prev => [{ id: crypto.randomUUID(), time: new Date().toLocaleTimeString(), msg: "LINK ERROR: CONNECTION FAILED" }, ...prev.slice(0, 499)]);
+       if (mode === 'photo') setIsScanning(false);
        throw error; 
     }
   }, [isScanning, mode, staticImg, consecutiveErrors, isVoiceEnabled, isSpeaking]);
@@ -342,10 +346,24 @@ function App() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (re) => { 
-        setStaticImg(re.target.result); 
-        setMode('photo');
-        setIsScanning(true); 
-        setLogs(prev => [{ id: crypto.randomUUID(), time: new Date().toLocaleTimeString(), msg: `LOADED: ${file.name.toUpperCase()}` }, ...prev.slice(0, 499)]);
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800; // Resize heavily to prevent network payload limits
+          let scaleSize = 1;
+          if (img.width > MAX_WIDTH) scaleSize = MAX_WIDTH / img.width;
+          canvas.width = img.width * scaleSize;
+          canvas.height = img.height * scaleSize;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const resizedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          
+          setStaticImg(resizedDataUrl); 
+          setMode('photo');
+          setIsScanning(true); 
+          setLogs(prev => [{ id: crypto.randomUUID(), time: new Date().toLocaleTimeString(), msg: `LOADED: ${file.name.toUpperCase()}` }, ...prev.slice(0, 499)]);
+        };
+        img.src = re.target.result;
       };
       reader.readAsDataURL(file);
     }
@@ -361,12 +379,12 @@ function App() {
             </Box>
         )}
         
-        {/* ── HEADER (CYBER) ── */}
-        <AppBar position="fixed" elevation={0} sx={{ bgcolor: 'rgba(2, 4, 10, 0.8)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(34, 211, 238, 0.1)' }}>
+        {/* ── HEADER (MODERN) ── */}
+        <AppBar position="fixed" elevation={0} sx={{ bgcolor: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
           <Toolbar variant="dense" sx={{ justifyContent: 'space-between' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <ShieldCheck size={18} className="text-cyan-400" />
-              <Typography variant="h6" sx={{ fontSize: '0.9rem', color: 'primary.main' }}>CORTEX-V<span className="text-slate-500 font-normal"> / STUDIO</span></Typography>
+              <ShieldCheck size={20} className="text-sky-600" />
+              <Typography variant="h6" sx={{ fontSize: '0.9rem', color: 'primary.main', fontWeight: 700, letterSpacing: '1px' }}>EMOTION DETECTION SYSTEM</Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Chip 
@@ -384,41 +402,65 @@ function App() {
         <Box sx={{ display: 'flex', flex: 1, mt: '48px', overflow: 'hidden' }}>
           
           {/* ── LEFT SIDEBAR (FIXED) ── */}
-          <Box sx={{ width: 280, flexShrink: 0, p: 2, borderRight: '1px solid rgba(34, 211, 238, 0.1)', bgcolor: '#02040a' }}>
+          <Box sx={{ width: 280, flexShrink: 0, p: 2, borderRight: '1px solid rgba(0, 0, 0, 0.08)', bgcolor: 'background.default' }}>
             <Box sx={{ mb: 4 }}>
-              <Typography variant="caption" sx={{ color: 'text.secondary', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <LayoutDashboard size={12} /> TACTICAL HUB
+              <Typography variant="caption" sx={{ color: 'text.secondary', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: 1, mb: 2, fontWeight: 600 }}>
+                <LayoutDashboard size={14} className="text-sky-500" /> TACTICAL HUB
               </Typography>
-              <Box sx={{ display: 'flex', bgcolor: 'background.paper', p: 0.5, borderRadius: 2, mb: 2, border: '1px solid rgba(34, 211, 238, 0.05)' }}>
+              <Box sx={{ display: 'flex', bgcolor: 'background.paper', p: 0.5, borderRadius: 2, mb: 2, border: '1px solid rgba(0, 0, 0, 0.08)', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                 <Button fullWidth size="small" variant={mode === 'live' ? 'contained' : 'text'} onClick={() => setMode('live')} sx={{ fontSize: '0.7rem' }}>LIVE</Button>
                 <Button fullWidth size="small" variant={mode === 'photo' ? 'contained' : 'text'} onClick={() => setMode('photo')} sx={{ fontSize: '0.7rem' }}>PHOTO</Button>
               </Box>
-              <Button 
-                fullWidth 
-                variant={isScanning ? "outlined" : "contained"} 
-                color={isScanning ? "error" : (mode === 'live' ? "primary" : "secondary")}
-                onClick={() => setIsScanning(!isScanning)}
-                startIcon={isScanning ? <RefreshCcw size={14} className={mode === 'live' ? "animate-spin" : ""} /> : <Zap size={14} />}
-                sx={{ mb: 1, boxShadow: isScanning ? 'none' : '0 0 20px rgba(34, 211, 238, 0.2)' }}
-              >
-                {mode === 'live' ? (isScanning ? "DISCONNECT" : "ENGAGE STREAM") : (isScanning ? "STOP UPDATE" : "RUN ANALYSIS")}
-              </Button>
-              {mode === 'photo' && (
-                <Button fullWidth variant="outlined" component="label" sx={{ mt: 1, borderColor: 'rgba(34, 211, 238, 0.2)' }}>
-                  SCAN FILE
-                  <input type="file" hidden onChange={handleFileUpload} accept="image/*" />
-                </Button>
-              )}
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                {mode === 'live' ? (
+                  <Button 
+                    fullWidth 
+                    variant={isScanning ? "outlined" : "contained"} 
+                    color={isScanning ? "error" : "primary"}
+                    onClick={() => setIsScanning(!isScanning)}
+                    startIcon={isScanning ? <RefreshCcw size={14} className="animate-spin" /> : <Zap size={14} />}
+                    sx={{ mb: 1, boxShadow: isScanning ? 'none' : '0 4px 6px -1px rgba(14, 165, 233, 0.3)' }}
+                  >
+                    {isScanning ? "DISCONNECT" : "ENGAGE STREAM"}
+                  </Button>
+                ) : (
+                  <Button 
+                    fullWidth 
+                    variant="contained" 
+                    color="primary"
+                    component="label"
+                    startIcon={isScanning ? <RefreshCcw size={14} className="animate-spin" /> : <Upload size={14} />}
+                    sx={{ mb: 1, boxShadow: '0 4px 6px -1px rgba(14, 165, 233, 0.3)' }}
+                    disabled={isScanning}
+                  >
+                    {isScanning ? "ANALYZING..." : (staticImg ? "UPLOAD NEW TARGET" : "UPLOAD IMAGE")}
+                    <input type="file" hidden onChange={handleFileUpload} onClick={(e) => (e.target.value = null)} accept="image/*" />
+                  </Button>
+                )}
+              </motion.div>
               
-              <Box sx={{ mt: 2, p: 2, bgcolor: isVoiceEnabled ? 'rgba(34, 211, 238, 0.05)' : 'transparent', borderRadius: 2, border: '1px solid rgba(34, 211, 238, 0.1)' }}>
+              <Box sx={{ mt: 2, p: 2, bgcolor: isVoiceEnabled ? 'rgba(14, 165, 233, 0.05)' : 'transparent', borderRadius: 2, border: '1px solid rgba(0, 0, 0, 0.08)' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                   <Typography variant="caption" sx={{ color: isVoiceEnabled ? 'primary.main' : 'text.secondary', fontWeight: 600 }}>NEURAL VOICE</Typography>
                   <Button 
                     size="small" 
                     variant={isVoiceEnabled ? "contained" : "outlined"} 
                     onClick={() => {
-                        if (isVoiceEnabled && audioRef.current) audioRef.current.pause();
-                        setIsVoiceEnabled(!isVoiceEnabled);
+                        const newVoiceState = !isVoiceEnabled;
+                        if (isVoiceEnabled) {
+                            // KILL ENGINE immediately
+                            if (audioRef.current) {
+                                audioRef.current.pause();
+                                audioRef.current = null;
+                            }
+                            window.speechSynthesis.cancel();
+                            setIsSpeaking(false);
+                        } else {
+                            // FRESH START
+                            stabilityCounterRef.current = { emotion: "", count: 0 };
+                            setLogs(prev => [{ id: crypto.randomUUID(), time: new Date().toLocaleTimeString(), msg: "NEURAL VOICE: ENABLED" }, ...prev.slice(0, 499)]);
+                        }
+                        setIsVoiceEnabled(newVoiceState);
                     }}
                     sx={{ minWidth: 0, p: 0.5, borderRadius: '50%' }}
                   >
@@ -443,8 +485,8 @@ function App() {
             <Divider sx={{ my: 3, opacity: 0.1 }} />
 
             <Box>
-              <Typography variant="caption" sx={{ color: 'text.secondary', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <Activity size={12} /> ENGINE STATUS
+              <Typography variant="caption" sx={{ color: 'text.secondary', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: 1, mb: 2, fontWeight: 600 }}>
+                <Activity size={14} className="text-sky-500" /> ENGINE STATUS
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 <div className="flex justify-between items-center">
@@ -464,9 +506,10 @@ function App() {
           </Box>
 
           {/* ── CENTER VIEWPORT (FLUID) ── */}
-          <Box component="main" sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', gap: 2, bgcolor: '#02040a', minWidth: 0 }}>
-            <Paper elevation={0} sx={{ flex: 1, position: 'relative', overflow: 'hidden', bgcolor: '#000', borderRadius: 4, border: '1px solid rgba(34, 211, 238, 0.1)' }}>
-              {mode === 'live' ? (
+          <Box component="main" sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', gap: 2, bgcolor: 'background.default', minWidth: 0, overflowY: 'auto' }}>
+            <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16/9', bgcolor: '#0f172a', borderRadius: 4, overflow: 'hidden', border: '1px solid rgba(0, 0, 0, 0.1)' }}>
+              <Paper elevation={0} sx={{ width: '100%', height: '100%', bgcolor: 'transparent', position: 'relative' }}>
+                {mode === 'live' ? (
                 <Webcam
                   audio={false}
                   ref={webcamRef}
@@ -480,7 +523,7 @@ function App() {
                     <img src={staticImg} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Static analysis" />
                   ) : (
                     <Box sx={{ textAlign: 'center', color: 'text.secondary' }}>
-                      <Radio size={48} className="mx-auto mb-4 opacity-10 animate-pulse text-cyan-400" />
+                      <Radio size={48} className="mx-auto mb-4 opacity-20 animate-pulse text-sky-500" />
                       <Typography variant="body2" sx={{ letterSpacing: 2 }}>WAITING FOR NEURAL SOURCE</Typography>
                     </Box>
                   )}
@@ -493,7 +536,7 @@ function App() {
                 <div className="hud-scanline opacity-30"></div>
                 {isScanning && (
                   <motion.div 
-                    className="absolute w-full h-[1px] bg-cyan-400/60 shadow-[0_0_20px_rgba(34,211,238,0.7)]"
+                    className="absolute w-full h-[1px] bg-sky-500/80 shadow-[0_0_15px_rgba(14,165,233,0.5)]"
                     animate={{ top: ["0%", "100%", "0%"] }}
                     transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                   />
@@ -507,7 +550,7 @@ function App() {
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0 }}
-                      className="absolute border border-cyan-400"
+                      className="absolute border-2 border-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.3)]"
                       style={{
                         left: `${(face[0] / imgMeta.w) * 100}%`,
                         top: `${(face[1] / imgMeta.h) * 100}%`,
@@ -515,49 +558,59 @@ function App() {
                         height: `${(face[3] / imgMeta.h) * 100}%`
                       }}
                     >
-                      <div className="absolute -top-1 -left-1 w-1.5 h-1.5 border-l-2 border-t-2 border-cyan-400"></div>
-                      <div className="absolute -top-1 -right-1 w-1.5 h-1.5 border-r-2 border-t-2 border-cyan-400"></div>
-                      <div className="absolute -bottom-1 -left-1 w-1.5 h-1.5 border-l-2 border-b-2 border-cyan-400"></div>
-                      <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 border-r-2 border-b-2 border-cyan-400"></div>
-                      <div className="absolute -top-6 left-0 bg-cyan-900/80 px-2 py-0.5 border-l-2 border-cyan-400 text-[9px] text-cyan-200 font-mono whitespace-nowrap">
+                      <div className="absolute -top-1 -left-1 w-1.5 h-1.5 border-l-2 border-t-2 border-sky-500"></div>
+                      <div className="absolute -top-1 -right-1 w-1.5 h-1.5 border-r-2 border-t-2 border-sky-500"></div>
+                      <div className="absolute -bottom-1 -left-1 w-1.5 h-1.5 border-l-2 border-b-2 border-sky-500"></div>
+                      <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 border-r-2 border-b-2 border-sky-500"></div>
+                      <div className="absolute -top-6 left-0 bg-white/95 px-2 py-0.5 border-l-2 border-sky-500 text-[9px] text-sky-800 font-bold font-mono whitespace-nowrap shadow-sm">
                          ID_{idx.toString().padStart(4, '0')} // {emotion}
                       </div>
                     </motion.div>
                   ))}
                 </AnimatePresence>
-              </Box>
-            </Paper>
+                </Box>
+              </Paper>
+            </Box>
 
-            <Paper elevation={0} sx={{ height: 160, p: 2, bgcolor: 'background.paper', display: 'flex', gap: 3, borderTop: '1px solid rgba(34, 211, 238, 0.1)' }}>
+            <Paper elevation={0} sx={{ height: 160, p: 2, bgcolor: 'background.paper', display: 'flex', gap: 3, borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
                <Box sx={{ width: 140, flexShrink: 0 }}>
-                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Database size={10} /> SESSION_METRICS
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1, mb: 1, fontWeight: 600 }}>
+                    <Database size={14} className="text-sky-500" /> SESSION_METRICS
                   </Typography>
-                  <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'slate.500', lineHeight: 1.5, display: 'block' }}>
+                  <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'slate.600', lineHeight: 1.5, display: 'block' }}>
                     SCANS: {sessionStats.faces}<br/>
                     PEAK: {sessionStats.peak}<br/>
                     UPTIME: {Math.floor(sessionStats.uptime/60)}m {sessionStats.uptime%60}s
                   </Typography>
                </Box>
-               <Box sx={{ flex: 1, overflowY: 'auto', borderLeft: '1px solid rgba(34, 211, 238, 0.05)', pl: 2, className: 'custom-scrollbar' }}>
-                  <Typography variant="caption" sx={{ color: 'cyan.900', mb: 1, display: 'block', fontSize: '0.6rem' }}>NEURAL_FEED_STREAMING (DEPTH: 500)</Typography>
-                  {logs.map((log) => (
-                    <Typography key={log.id} variant="caption" display="block" sx={{ fontFamily: 'monospace', color: 'text.secondary', opacity: 0.8, fontSize: '0.7rem' }}>
-                      <span className="text-cyan-800">[{log.time}]</span> {log.msg}
-                    </Typography>
-                  ))}
+               <Box sx={{ flex: 1, overflowY: 'auto', borderLeft: '1px solid rgba(0, 0, 0, 0.08)', pl: 2, className: 'custom-scrollbar' }}>
+                  <Typography variant="caption" sx={{ color: '#0ea5e9', mb: 1, display: 'block', fontSize: '0.6rem', fontWeight: 600 }}>NEURAL_FEED_STREAMING (DEPTH: 500)</Typography>
+                  <AnimatePresence mode="popLayout">
+                    {logs.map((log) => (
+                      <motion.div
+                        key={log.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        layout
+                      >
+                        <Typography variant="caption" display="block" sx={{ fontFamily: 'monospace', color: 'text.secondary', opacity: 0.9, fontSize: '0.7rem' }}>
+                          <span className="text-sky-600 font-medium">[{log.time}]</span> {log.msg}
+                        </Typography>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                </Box>
             </Paper>
           </Box>
 
           {/* ── RIGHT PANEL (FIXED) ── */}
-          <Box sx={{ width: 320, flexShrink: 0, p: 2, borderLeft: '1px solid rgba(34, 211, 238, 0.1)', bgcolor: '#02040a' }}>
+          <Box sx={{ width: 320, flexShrink: 0, p: 2, borderLeft: '1px solid rgba(0, 0, 0, 0.08)', bgcolor: 'background.default' }}>
             <Box sx={{ mb: 4 }}>
-              <Typography variant="caption" sx={{ color: 'text.secondary', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-                <BarChart2 size={12} /> TELEMETRY OUTPUT
+              <Typography variant="caption" sx={{ color: 'text.secondary', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: 1, mb: 3, fontWeight: 600 }}>
+                <BarChart2 size={14} className="text-sky-500" /> TELEMETRY OUTPUT
               </Typography>
               
-              <Paper elevation={0} sx={{ p: 2, mb: 3, borderLeft: '4px solid', borderColor: 'primary.main', bgcolor: 'rgba(34, 211, 238, 0.05)', boxShadow: '0 0 20px rgba(34, 211, 238, 0.05)' }}>
+              <Paper elevation={0} sx={{ p: 2, mb: 3, borderLeft: '4px solid', borderColor: 'primary.main', bgcolor: 'rgba(14, 165, 233, 0.05)', boxShadow: '0 4px 6px -1px rgba(14, 165, 233, 0.1)' }}>
                  <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.6rem' }}>NEURAL MODE SIGNATURE</Typography>
                  <Typography variant="h4" sx={{ mb: 0.5, fontFamily: 'Space Grotesk', color: 'primary.main' }}>{emotion.toUpperCase()}</Typography>
                  <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>{confidence.toFixed(1)}% Match</Typography>
@@ -571,17 +624,17 @@ function App() {
             </Box>
 
             <Box sx={{ mt: 'auto', textAlign: 'center' }}>
-               <Paper elevation={0} sx={{ p: 1, bgcolor: 'rgba(34, 211, 238, 0.02)', border: '1px solid rgba(34, 211, 238, 0.05)' }}>
-                  <Typography variant="caption" sx={{ color: 'slate.700', fontSize: '0.55rem', letterSpacing: 2 }}>
-                    CORTEX-V // PEAK STABILITY // ACTIVE
+               <Paper elevation={0} sx={{ p: 1, bgcolor: 'rgba(0, 0, 0, 0.02)', border: '1px solid rgba(0, 0, 0, 0.05)' }}>
+                  <Typography variant="caption" sx={{ color: 'slate.500', fontSize: '0.55rem', letterSpacing: 2, fontWeight: 500 }}>
+                    EMOTION DETECTION // PEAK STABILITY // ACTIVE
                   </Typography>
                </Paper>
             </Box>
           </Box>
 
-        </Box>
       </Box>
-    </ThemeProvider>
+    </Box>
+  </ThemeProvider>
   );
 }
 

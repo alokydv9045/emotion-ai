@@ -233,5 +233,10 @@ In production mode, the FastAPI backend serves the React SPA statically from the
 
 The **emotion detection system** represents a fusion of modern Deep Learning, low-latency API architecture, and empathetic UI design. By strictly synchronizing the vision pipeline from training to production, and anchoring the experience with a futuristic design system, it sets a new standard for localized, human-centric AI.
 
+---
+
+## 📂 Annexures
+For detailed technical data and architectural specifics, refer to the **[ANNEXURES / APPENDIX](./appendices.md)**.
+
 **Developed with ❤️ by Team CodeCrafters**
 *(Final Revision: April 2026)*

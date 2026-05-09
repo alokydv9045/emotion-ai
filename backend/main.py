@@ -1,6 +1,13 @@
 import os
 import cv2
 import numpy as np
+
+# ── HARDWARE LOCKDOWN (Before TensorFlow Import) ──
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
+os.environ["TF_CPP_MIN_VLOG_LEVEL"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Force CPU if GPU issues
+
 import tensorflow as tf
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
@@ -18,10 +25,6 @@ from elevenlabs.client import ElevenLabs
 from dotenv import load_dotenv
 
 load_dotenv()
-
-# ── HARDWARE LOCKDOWN ──
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
